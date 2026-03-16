@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.Haptics;
 using System.Collections;
 
 public class PlayerController : MonoBehaviour
@@ -31,6 +30,8 @@ public class PlayerController : MonoBehaviour
 
     public ParticleSystem muzzleFlash;
 
+    public InputReader input;
+
     public enum DeadZoneType
     {
         Axial,
@@ -40,9 +41,6 @@ public class PlayerController : MonoBehaviour
 
     public DeadZoneType deadZoneType = DeadZoneType.Radial;
     public float deadZone = 0.15f;
-
-    Vector2 moveInput;
-    Vector2 lookInput;
 
     Vector3 velocity;
     bool isGrounded;
@@ -65,31 +63,15 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    public void OnMove(InputValue value)
-    {
-        moveInput = value.Get<Vector2>();
-    }
-
-    public void OnLook(InputValue value)
-    {
-        lookInput = value.Get<Vector2>();
-    }
-
-    public void OnJump()
-    {
-        if (coyoteTimeCounter > 0f)
-        {
-            velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
-            coyoteTimeCounter = 0f;
-        }
-    }
-
-    public void OnShoot()
+    void Shoot()
     {
         Ray ray = new Ray(cameraTransform.position, cameraTransform.forward);
         RaycastHit hit;
 
         shootAudio.Play();
+
+        if (muzzleFlash != null)
+            muzzleFlash.Play();
 
         StartCoroutine(GamepadVibration(vibrationLow, vibrationHigh, vibrationDuration));
 
@@ -101,15 +83,24 @@ public class PlayerController : MonoBehaviour
             TargetStand stand = hit.collider.GetComponent<TargetStand>();
 
             if (stand != null)
-            {
                 stand.Activate();
-            }
         }
     }
 
+    void Jump()
+    {
+        if (coyoteTimeCounter > 0f)
+        {
+            velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+            coyoteTimeCounter = 0f;
+        }
+    }
 
     void Update()
     {
+        Vector2 moveInput = input.Move;
+        Vector2 lookInput = input.Look;
+
         Vector2 processedLook = lookInput;
 
         switch(deadZoneType)
@@ -143,6 +134,12 @@ public class PlayerController : MonoBehaviour
 
         Vector3 move = transform.right * moveInput.x + transform.forward * moveInput.y;
         controller.Move(move * speed * Time.deltaTime);
+
+        if (input.JumpPressed)
+            Jump();
+
+        if (input.ShootPressed)
+            Shoot();
 
         isGrounded = controller.isGrounded;
 

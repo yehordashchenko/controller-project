@@ -1,6 +1,7 @@
 using UnityEngine;
 using TMPro;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.LowLevel;
 
 public class InputDebugPanel : MonoBehaviour
 {
@@ -20,17 +21,18 @@ public class InputDebugPanel : MonoBehaviour
 
     void OnEnable()
     {
-        InputSystem.onAnyButtonPress.Call(OnButtonPressed);
+        InputSystem.onEvent += OnInputEvent;
     }
 
     void OnDisable()
     {
-        InputSystem.onAnyButtonPress.Remove(OnButtonPressed);
+        InputSystem.onEvent -= OnInputEvent;
     }
 
-    void OnButtonPressed(InputControl control)
+    void OnInputEvent(InputEventPtr eventPtr, InputDevice device)
     {
-        var device = control.device;
+        if (!eventPtr.IsA<StateEvent>() && !eventPtr.IsA<DeltaStateEvent>())
+            return;
 
         if (device is Gamepad)
         {
@@ -48,7 +50,6 @@ public class InputDebugPanel : MonoBehaviour
             else
                 currentDevice = "Gamepad";
         }
-
         else if (device is Keyboard || device is Mouse)
         {
             currentDevice = "Keyboard & Mouse";
@@ -83,6 +84,9 @@ public class InputDebugPanel : MonoBehaviour
 
             "VIBRATION SETTINGS\n" +
             "Strength: " + player.vibrationLow.ToString("F2") + "\n" +
-            "Duration: " + player.vibrationDuration.ToString("F2");
+            "Duration: " + player.vibrationDuration.ToString("F2") +
+
+            "\n\nLOOK SETTINGS\n" +
+            "Sensitivity: " + player.lookSensitivity.ToString("F0");
     }
 }

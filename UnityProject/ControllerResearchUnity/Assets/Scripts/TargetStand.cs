@@ -15,7 +15,10 @@ public class TargetStand : MonoBehaviour
         VibrationStrengthMinus,
 
         VibrationDurationPlus,
-        VibrationDurationMinus
+        VibrationDurationMinus,
+
+        SensitivityIncrease,
+        SensitivityDecrease
     }
 
     public StandType standType;
@@ -73,6 +76,16 @@ public class TargetStand : MonoBehaviour
 
             case StandType.VibrationDurationMinus:
                 player.vibrationDuration -= durationStep;
+                break;
+
+            case StandType.SensitivityIncrease:
+                player.lookSensitivity += 10f;
+                player.lookSensitivity = Mathf.Clamp(player.lookSensitivity, 10f, 500f);
+                break;
+
+            case StandType.SensitivityDecrease:
+                player.lookSensitivity -= 10f;
+                player.lookSensitivity = Mathf.Clamp(player.lookSensitivity, 10f, 500f);
                 break;
         }
     }
