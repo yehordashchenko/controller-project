@@ -8,6 +8,12 @@ public class InputDebugPanel : MonoBehaviour
     public TextMeshProUGUI debugText;
     public PlayerController player;
 
+    Gamepad activeGamepad;
+
+    float lastGamepadTime;
+    float lastKeyboardTime;
+    float deviceSwitchCooldown = 0.5f;
+
     Vector2 rawInput;
     Vector2 processedInput;
 
@@ -19,45 +25,15 @@ public class InputDebugPanel : MonoBehaviour
         processedInput = processed;
     }
 
-    void OnEnable()
+    public Gamepad GetActiveGamepad()
     {
-        InputSystem.onEvent += OnInputEvent;
-    }
-
-    void OnDisable()
-    {
-        InputSystem.onEvent -= OnInputEvent;
-    }
-
-    void OnInputEvent(InputEventPtr eventPtr, InputDevice device)
-    {
-        if (!eventPtr.IsA<StateEvent>() && !eventPtr.IsA<DeltaStateEvent>())
-            return;
-
-        if (device is Gamepad)
-        {
-            string name = device.displayName;
-
-            if (name.Contains("DualSense"))
-                currentDevice = "DualSense Controller";
-
-            else if (name.Contains("DualShock"))
-                currentDevice = "DualShock Controller";
-
-            else if (name.Contains("Xbox"))
-                currentDevice = "Xbox Controller";
-
-            else
-                currentDevice = "Gamepad";
-        }
-        else if (device is Keyboard || device is Mouse)
-        {
-            currentDevice = "Keyboard & Mouse";
-        }
+        return activeGamepad;
     }
 
     void Update()
     {
+        DetectActiveDevice();
+
         float rawMagnitude = rawInput.magnitude;
         float processedMagnitude = processedInput.magnitude;
 
@@ -88,5 +64,71 @@ public class InputDebugPanel : MonoBehaviour
 
             "\n\nLOOK SETTINGS\n" +
             "Sensitivity: " + player.lookSensitivity.ToString("F0");
+    }
+
+    void DetectActiveDevice()
+    {
+        float currentTime = Time.time;
+
+        // 🎮 ПРОХОДИМ ПО ВСЕМ ГЕЙМПАДАМ
+        foreach (var gamepad in Gamepad.all)
+        {
+            if (gamepad == null) continue;
+
+            bool isActive =
+                gamepad.leftStick.ReadValue().magnitude > 0.2f ||
+                gamepad.rightStick.ReadValue().magnitude > 0.2f ||
+                gamepad.leftTrigger.ReadValue() > 0.1f ||
+                gamepad.rightTrigger.ReadValue() > 0.1f ||
+                gamepad.buttonSouth.isPressed;
+
+            if (isActive)
+            {
+                lastGamepadTime = currentTime;
+                activeGamepad = gamepad; // 🔥 ВАЖНО
+            }
+        }
+
+        // ⌨️ Keyboard / Mouse
+        if ((Keyboard.current != null && Keyboard.current.anyKey.isPressed) ||
+            (Mouse.current != null && Mouse.current.delta.ReadValue().sqrMagnitude > 0.01f))
+        {
+            lastKeyboardTime = currentTime;
+        }
+
+        // 🧠 выбор устройства
+        if (lastGamepadTime > lastKeyboardTime)
+        {
+            SetGamepadName(activeGamepad);
+        }
+        else
+        {
+            currentDevice = "Keyboard & Mouse";
+            activeGamepad = null;
+        }
+    }
+
+    void SetGamepadName(Gamepad gamepad)
+    {
+        if (gamepad == null)
+        {
+            currentDevice = "None";
+            return;
+        }
+
+        string layout = gamepad.layout.ToLower();
+        string name = gamepad.displayName.ToLower();
+
+        if (layout.Contains("dualsense"))
+            currentDevice = "DualSense Controller";
+
+        else if (layout.Contains("dualshock"))
+            currentDevice = "DualShock Controller";
+
+        else if (name.Contains("xbox"))
+            currentDevice = "Xbox Controller";
+
+        else
+            currentDevice = "Generic Gamepad";
     }
 }
