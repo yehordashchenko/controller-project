@@ -9,6 +9,7 @@ public class DriftTestZone : MonoBehaviour
     public float resultShowTime = 4f;
 
     public TextMeshProUGUI resultText;
+    public InputReader inputReader;
 
     float timer;
     bool testing;
@@ -50,7 +51,7 @@ public class DriftTestZone : MonoBehaviour
 
         timer -= Time.deltaTime;
 
-        Vector2 input = Gamepad.current.rightStick.ReadValue();
+        Vector2 input = inputReader.Look; 
         float magnitude = input.magnitude;
 
         if (magnitude > maxDrift)

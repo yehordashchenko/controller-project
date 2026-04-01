@@ -162,13 +162,5 @@ public class PlayerController : MonoBehaviour
 
         velocity.y += gravity * Time.deltaTime;
         controller.Move(velocity * Time.deltaTime);
-
-        if (debugPanel.GetActiveGamepad() == null)
-        {
-            foreach (var g in Gamepad.all)
-            {
-                g.SetMotorSpeeds(0f, 0f);
-            }
-        }
     }
 }

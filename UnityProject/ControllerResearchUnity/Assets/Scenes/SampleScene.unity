@@ -1834,7 +1834,7 @@ MonoBehaviour:
   vibrationLow: 0.2
   vibrationHigh: 0.3
   vibrationDuration: 0.1
-  muzzleFlash: {fileID: 2107940377}
+  muzzleFlash: {fileID: 0}
   input: {fileID: 149801078}
   deadZoneType: 1
   deadZone: 0.15
@@ -4979,6 +4979,7 @@ MonoBehaviour:
   testDuration: 5
   resultShowTime: 4
   resultText: {fileID: 600375094}
+  inputReader: {fileID: 149801078}
 --- !u!43 &987060733
 Mesh:
   m_ObjectHideFlags: 0

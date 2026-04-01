@@ -17,6 +17,7 @@ public class InputReader : MonoBehaviour
     public void OnLook(InputValue value)
     {
         Look = value.Get<Vector2>();
+        // Debug.Log($"RAW LOOK INPUT: {Look}");
     }
 
     public void OnJump()

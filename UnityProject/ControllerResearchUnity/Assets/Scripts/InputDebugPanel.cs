@@ -69,8 +69,8 @@ public class InputDebugPanel : MonoBehaviour
     void DetectActiveDevice()
     {
         float currentTime = Time.time;
+        bool isAnyControllerActive = false;
 
-        // 🎮 ПРОХОДИМ ПО ВСЕМ ГЕЙМПАДАМ
         foreach (var gamepad in Gamepad.all)
         {
             if (gamepad == null) continue;
@@ -85,23 +85,34 @@ public class InputDebugPanel : MonoBehaviour
             if (isActive)
             {
                 lastGamepadTime = currentTime;
-                activeGamepad = gamepad; // 🔥 ВАЖНО
+                activeGamepad = gamepad;
+                SetGamepadName(gamepad);
+                isAnyControllerActive = true;
             }
         }
 
-        // ⌨️ Keyboard / Mouse
+        foreach (var joystick in Joystick.all)
+        {
+            if (joystick == null) continue;
+
+            bool isActive = joystick.stick.ReadValue().magnitude > 0.2f;
+
+            if (isActive)
+            {
+                lastGamepadTime = currentTime;
+                activeGamepad = null;
+                currentDevice = $"DirectInput: {joystick.displayName}";
+                isAnyControllerActive = true;
+            }
+        }
+
         if ((Keyboard.current != null && Keyboard.current.anyKey.isPressed) ||
             (Mouse.current != null && Mouse.current.delta.ReadValue().sqrMagnitude > 0.01f))
         {
             lastKeyboardTime = currentTime;
         }
 
-        // 🧠 выбор устройства
-        if (lastGamepadTime > lastKeyboardTime)
-        {
-            SetGamepadName(activeGamepad);
-        }
-        else
+        if (lastKeyboardTime > lastGamepadTime)
         {
             currentDevice = "Keyboard & Mouse";
             activeGamepad = null;
@@ -110,25 +121,18 @@ public class InputDebugPanel : MonoBehaviour
 
     void SetGamepadName(Gamepad gamepad)
     {
-        if (gamepad == null)
-        {
-            currentDevice = "None";
-            return;
-        }
+        if (gamepad == null) return;
 
         string layout = gamepad.layout.ToLower();
         string name = gamepad.displayName.ToLower();
 
         if (layout.Contains("dualsense"))
             currentDevice = "DualSense Controller";
-
         else if (layout.Contains("dualshock"))
             currentDevice = "DualShock Controller";
-
         else if (name.Contains("xbox"))
             currentDevice = "Xbox Controller";
-
         else
-            currentDevice = "Generic Gamepad";
+            currentDevice = "Generic XInput Gamepad";
     }
 }
